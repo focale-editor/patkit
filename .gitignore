@@ -10,6 +10,7 @@
 .svn/
 migrate_working_dir/
 .env
+pubspec_overrides.yaml
 
 # IntelliJ related
 *.iml
