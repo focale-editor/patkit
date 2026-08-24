@@ -1,0 +1,3 @@
+dependency_overrides:
+  pscore:
+    path: ../PsCore
