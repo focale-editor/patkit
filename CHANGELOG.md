@@ -1,5 +1,10 @@
 # 📰 PatKit changelog
 
+## v0.2.0
+Released on September 13, 2026.
+
+* **BREAKING REFACTOR**: Use shared `pscore` tagged block and hierarchy helpers. ([#06ba2ed](https://github.com/focale-editor/patkit/commit/06ba2ed))
+
 ## v0.1.1
 Released on September 12, 2026.
 
