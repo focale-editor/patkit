@@ -50,6 +50,22 @@ final PatPatternImage image = pattern.renderRgba8(
 
 Without a converter, PatKit returns a deterministic profile-free preview. Lab is converted through D50 XYZ to sRGB. Multichannel and duotone sources use their first plane as a grayscale preview because their external ink definitions are not stored in the PAT record.
 
+## Reusable `dart:convert` API
+
+`PatCodec` implements `Codec<PatFile, List<int>>` and keeps decoding and encoding policies together in one immutable value:
+
+```dart
+const PatCodec codec = PatCodec(
+  decodeOptions: PatDecodeOptions(mode: PatDecodeMode.strict),
+  encodeOptions: PatEncodeOptions(mode: PatEncodeMode.strict),
+);
+
+final PatFile library = codec.decode(bytes);
+final Uint8List output = codec.encode(library);
+```
+
+The `List<int>` binary type allows composition with standard codecs such as `base64`; direct `encode` calls still return `Uint8List`. `PatEncoder` and `PatDecoder` are also configurable `Converter` implementations. Every conversion consumes or produces one complete in-memory PAT file rather than an incremental byte stream.
+
 ## Hierarchy
 
 Newer Photoshop files can append a `phry` hierarchy. `PatFile.hierarchy` is a flattened ordered sequence of group starts, group ends, and presets. Preset entries resolve directly to their source pattern:

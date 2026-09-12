@@ -3,6 +3,7 @@ library;
 
 export 'package:pscore/pscore.dart';
 
+export 'src/codec/pat_codec.dart';
 export 'src/codec/pat_decoder.dart';
 export 'src/codec/pat_encoder.dart';
 export 'src/model/pat_file.dart';

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:patkit/src/codec/pat_hierarchy_mapper.dart';
@@ -8,7 +9,24 @@ import 'package:patkit/src/model/pat_pattern.dart';
 import 'package:pscore/pscore.dart';
 
 /// Decodes Adobe Photoshop `8BPT` pattern libraries.
-abstract final class PatDecoder {
+///
+/// The configured instance is a one-shot [Converter] for complete in-memory
+/// files. Use [decode] when conversion options are supplied per call.
+final class PatDecoder extends Converter<List<int>, PatFile> {
+  /// Options applied by [convert].
+  final PatDecodeOptions options;
+
+  /// Creates a reusable decoder with fixed [options].
+  const PatDecoder({
+    this.options = const PatDecodeOptions(),
+  });
+
+  @override
+  PatFile convert(List<int> input) => decode(
+    input is Uint8List ? input : Uint8List.fromList(input),
+    options: options,
+  );
+
   /// Four-byte file signature used by every standalone PAT library.
   static const String _fileSignature = '8BPT';
 

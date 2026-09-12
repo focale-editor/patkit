@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:patkit/src/model/pat_file.dart';
@@ -6,7 +7,21 @@ import 'package:patkit/src/model/pat_pattern.dart';
 import 'package:pscore/pscore.dart';
 
 /// Encodes immutable PAT models into standalone Photoshop pattern libraries.
-abstract final class PatEncoder {
+///
+/// The configured instance is a one-shot [Converter] for complete in-memory
+/// files. Use [encode] when conversion options are supplied per call.
+final class PatEncoder extends Converter<PatFile, List<int>> {
+  /// Options applied by [convert].
+  final PatEncodeOptions options;
+
+  /// Creates a reusable encoder with fixed [options].
+  const PatEncoder({
+    this.options = const PatEncodeOptions(),
+  });
+
+  @override
+  Uint8List convert(PatFile input) => encode(input, options: options);
+
   /// Canonical standalone PAT signature.
   static const String _fileSignature = '8BPT';
 
