@@ -60,6 +60,22 @@ void main() {
       check(image.height).equals(4);
       check(file.warnings).isEmpty();
     });
+
+    test('re-encodes every real corpus library into a decodable PAT', () {
+      for (final String name in <String>[
+        'colormodes.pat',
+        'hue.pat',
+        'multichannel-5.pat',
+      ]) {
+        final PatFile source = PatDecoder.decode(_fixture(name));
+
+        final PatFile roundTrip = PatDecoder.decode(PatEncoder.encode(source));
+
+        check(roundTrip.patterns).length.equals(source.patterns.length);
+        check(roundTrip.patterns.map((pattern) => pattern.id).toList()).deepEquals(source.patterns.map((pattern) => pattern.id).toList());
+        check(roundTrip.patterns.map((pattern) => pattern.renderRgba8().rgba).toList()).deepEquals(source.patterns.map((pattern) => pattern.renderRgba8().rgba).toList());
+      }
+    });
   });
 }
 

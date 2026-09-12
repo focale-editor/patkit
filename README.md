@@ -1,6 +1,6 @@
 # PatKit
 
-PatKit is a pure Dart reader for Adobe Photoshop pattern libraries (`.pat`). It decodes the original source planes and metadata, renders portable RGBA previews, and preserves extensions that are not yet understood. It has no Flutter, native-code, or third-party PAT-parser dependency.
+PatKit is a pure Dart codec for Adobe Photoshop pattern libraries (`.pat`). It decodes and encodes the original source planes and metadata, renders portable RGBA previews, and preserves extensions that are not yet understood. It has no Flutter, native-code, or third-party PAT-parser dependency.
 
 The package is intended for editors such as Focale that need dependable access to more than thumbnails: exact pattern identifiers, full-precision channels, indexed palettes, transparency, group hierarchy, and bounded decoding of untrusted files.
 
@@ -14,6 +14,7 @@ The package is intended for editors such as Focale that need dependable access t
 - Version 16 `phry` Action Descriptors with nested groups, group ends, presets, names, and identifiers.
 - Unknown color modes, compression markers, channel bytes, descriptor values, and tagged blocks preserved for forward compatibility.
 - Configurable limits for file size, records, dimensions, channels, compressed data, decoded pixels, descriptors, hierarchy entries, and tagged blocks.
+- Canonical PAT writing from decoded raw or PackBits planes, including indexed metadata, hierarchy descriptors, and optional compatibility data.
 
 ## Usage
 
@@ -30,6 +31,9 @@ for (final PatPattern pattern in library.patterns) {
   final PatPatternImage image = pattern.renderRgba8();
   print('${pattern.name}: ${image.width} × ${image.height} (${pattern.id})');
 }
+
+final Uint8List output = PatEncoder.encode(library);
+await File('patterns-copy.pat').writeAsBytes(output, flush: true);
 ```
 
 `PatPatternImage.rgba` contains four bytes per pixel in red, green, blue, alpha order. Source channels remain available through `PatPattern.channels`; their `sampleAt`, `normalizedSampleAt`, and `byteSampleAt` methods retain the distinctions between 1, 8, 16, and floating-point 32-bit data. Check `pattern.canRenderRgba8` when decoding was disabled or an unsupported channel was preserved; `renderRgba8` rejects unavailable planes instead of silently returning a misleading preview.
@@ -61,7 +65,7 @@ for (final PatHierarchyEntry entry in library.hierarchy) {
 
 The complete generic `PsDescriptor` is also retained for every hierarchy block.
 
-## Strict, tolerant, and memory-bounded decoding
+## Decoding and encoding policies
 
 Tolerant decoding is the default. Recoverable extensions are preserved and reported through `PatFile.warnings`. Strict mode turns each compatibility warning into a `PatFormatException`:
 
@@ -81,9 +85,22 @@ The preservation switches are independent:
 
 For an editor that only needs rendered pixels, keep `decodeChannelData` enabled and disable the three preservation switches to avoid redundant source copies. All configured resource limits are checked before the corresponding allocation.
 
+`PatEncoder.encode` writes a canonical standalone version 1 library by default. Known channel planes are rebuilt from decoded samples with their selected raw or PackBits compression, so `preserveChannelData` and `preserveRecordData` can be disabled when channel decoding remains enabled. Indexed palettes and metadata, sparse slots, tagged blocks, and hierarchy descriptors are included.
+
+Permissive mode reproduces representable compatibility values and preserved extension bytes:
+
+```dart
+final Uint8List output = PatEncoder.encode(
+  library,
+  options: const PatEncodeOptions(mode: PatEncodeMode.permissive),
+);
+```
+
+Unknown channel encodings and opaque tagged blocks require their source payloads to have been preserved. Invalid or incomplete models produce a `PatWriteException` instead of partial output.
+
 ## Scope
 
-PatKit currently reads PAT files but does not write them. It deliberately exposes original metadata and opaque bytes so writing can be added later without narrowing the read model. Focale integration is intentionally left to a separate change.
+PatKit reads, writes, and previews PAT files. It does not apply ICC color profiles or interpret the external ink definitions needed for exact multichannel and duotone compositing; applications can provide their own CMYK conversion for previews. Focale integration is intentionally left to a separate change.
 
 See [docs/PAT.md](docs/PAT.md) for the implemented binary layout, compatibility matrix, and rendering conventions.
 

@@ -120,6 +120,12 @@ Compression `1` begins with one unsigned 16-bit encoded length per row. Each fol
 
 The final sheet-transparency slot supplies alpha when present. User masks are preserved but are not implicitly multiplied into the tile; a host can apply them according to its own compositing semantics.
 
+## Encoding
+
+`PatEncoder` writes standalone `8BPT` version 1 libraries. The shared `PsPatternRecordEncoder` regenerates pattern headers, indexed palettes, Virtual Memory Arrays, sparse slots, channel headers, and raw or PackBits sample payloads from the immutable model. Known decoded planes therefore remain writable even when their original encoded channel and record copies were not retained.
+
+Strict mode emits canonical counts, lengths, Unicode strings, Pascal identifiers, and zero alignment. Permissive mode retains representable compatibility markers, opaque slot data, tagged-block padding, alternate signatures, and trailing bytes. An opaque channel or tagged block requires the matching preservation option during decoding; missing data results in `PatWriteException` rather than a truncated library.
+
 ## Tagged trailers and hierarchy
 
 After the declared records, newer exporters may append tagged blocks:

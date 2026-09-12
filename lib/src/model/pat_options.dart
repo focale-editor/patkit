@@ -9,6 +9,15 @@ enum PatDecodeMode {
   tolerant,
 }
 
+/// Controls how strongly a PAT library is validated before encoding.
+enum PatEncodeMode {
+  /// Produces a canonical standalone version 1 pattern library.
+  strict,
+
+  /// Writes representable preserved values, including compatibility extensions.
+  permissive,
+}
+
 /// Resource and preservation limits applied while decoding a PAT library.
 final class PatDecodeOptions {
   /// Handling policy for recoverable format extensions and damaged records.
@@ -76,6 +85,29 @@ final class PatDecodeOptions {
   });
 }
 
+/// Preservation and validation choices applied while encoding a PAT library.
+final class PatEncodeOptions {
+  /// Validation policy applied before values are written.
+  final PatEncodeMode mode;
+
+  /// Whether trailing Photoshop tagged blocks are appended.
+  final bool includeTaggedBlocks;
+
+  /// Whether uninterpreted bytes after the tagged blocks are appended.
+  final bool includeTrailingData;
+
+  /// Whether extension bytes inside pattern virtual-memory arrays are retained.
+  final bool includeVirtualMemoryTrailingData;
+
+  /// Creates encoding options for canonical PAT output by default.
+  const PatEncodeOptions({
+    this.mode = PatEncodeMode.strict,
+    this.includeTaggedBlocks = true,
+    this.includeTrailingData = true,
+    this.includeVirtualMemoryTrailingData = true,
+  });
+}
+
 /// Describes a recoverable compatibility issue found while decoding.
 final class PatWarning {
   /// Human-readable explanation of the compatibility issue.
@@ -134,4 +166,18 @@ final class PatFormatException implements FormatException {
     final String location = offset == null ? '' : ' at byte $offset';
     return 'PatFormatException$location: $message';
   }
+}
+
+/// Reports model data that cannot be represented by the requested PAT output.
+final class PatWriteException implements Exception {
+  /// Explains why encoding failed.
+  final String message;
+
+  /// Creates an encoding error with a user-facing [message].
+  const PatWriteException({
+    required this.message,
+  });
+
+  @override
+  String toString() => 'PatWriteException: $message';
 }
