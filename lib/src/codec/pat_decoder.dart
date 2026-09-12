@@ -33,9 +33,6 @@ final class PatDecoder extends Converter<List<int>, PatFile> {
   /// Four-byte signature used by ordinary Photoshop tagged blocks.
   static const String _taggedBlockSignature = '8BIM';
 
-  /// Alternate signature accepted for forward-compatible tagged blocks.
-  static const String _largeTaggedBlockSignature = '8B64';
-
   /// Descriptor version stored before a Photoshop Action Descriptor.
   static const int _descriptorVersion = 16;
 
@@ -129,31 +126,28 @@ final class PatDecoder extends Converter<List<int>, PatFile> {
   static void _decodeTaggedBlocks(PsBinaryReader reader, _PatDecodeContext context) {
     while (!reader.isAtEnd) {
       final int blockOffset = reader.baseOffset + reader.offset;
-      if (reader.remaining < 12 || !_hasTaggedSignature(reader, 0)) {
+      if (reader.remaining < 12 || !PsTaggedBlockCodec.hasSignature(reader)) {
         context.trailingData = reader.readBytes(reader.remaining);
         context.issue('${context.trailingData.length} unrecognized trailing bytes remain after the PAT payload', blockOffset);
         return;
       }
 
-      final bool usesWideLength = _hasLargeTaggedSignature(reader);
+      final bool usesWideLength = PsTaggedBlockCodec.usesWideLengthSignature(reader);
       if (usesWideLength && reader.remaining < 16) {
         context.trailingData = reader.readBytes(reader.remaining);
         context.issue('Truncated PAT 8B64 tagged-block header', blockOffset);
         return;
       }
 
-      final String signature = reader.readString(4);
-      final String key = reader.readString(4);
-      final int length = usesWideLength ? reader.readUint64() : reader.readUint32();
-      final int payloadOffset = blockOffset + (usesWideLength ? 16 : 12);
+      final PsTaggedBlockHeader header = PsTaggedBlockCodec.readHeader(
+        reader,
+        maxPayloadBytes: context.options.maxTaggedBlockBytes,
+      );
+      final String signature = header.signature;
+      final String key = header.key;
+      final int length = header.declaredLength;
+      final int payloadOffset = header.payloadOffset;
       context.blockKey = key;
-      if (length > context.options.maxTaggedBlockBytes) {
-        throw PsFormatException(
-          message: 'PAT tagged block $key length $length exceeds the configured ${context.options.maxTaggedBlockBytes} byte limit',
-          source: reader.bytes,
-          offset: blockOffset + 8,
-        );
-      }
       if (length > reader.remaining) {
         final Uint8List available = reader.readView(reader.remaining);
         context.addTaggedBlock(
@@ -170,7 +164,10 @@ final class PatDecoder extends Converter<List<int>, PatFile> {
       }
 
       final Uint8List payload = reader.readView(length);
-      final int paddingLength = _taggedPaddingLength(reader, length);
+      final int paddingLength = PsTaggedBlockCodec.paddingLength(
+        reader,
+        payloadLength: length,
+      );
       final Uint8List padding = reader.readBytes(paddingLength);
       context.addTaggedBlock(
         signature: signature,
@@ -204,14 +201,14 @@ final class PatDecoder extends Converter<List<int>, PatFile> {
   }) {
     try {
       final PsBinaryReader descriptorReader = PsBinaryReader(bytes: payload, baseOffset: payloadOffset);
-      final int version = descriptorReader.readUint32();
-      if (version != _descriptorVersion) {
-        context.issue('PAT hierarchy descriptor version $version is not currently defined', payloadOffset);
-      }
-      final PsDescriptor descriptor = PsDescriptorCodec.decodeReader(
+      final PsVersionedDescriptor versioned = PsVersionedDescriptorCodec.read(
         descriptorReader,
         options: context.options.descriptorOptions,
       );
+      if (versioned.version != _descriptorVersion) {
+        context.issue('PAT hierarchy descriptor version ${versioned.version} is not currently defined', payloadOffset);
+      }
+      final PsDescriptor descriptor = versioned.descriptor;
       if (!descriptorReader.isAtEnd) {
         context.issue('${descriptorReader.remaining} extension bytes remain after the PAT hierarchy descriptor', descriptorReader.baseOffset + descriptorReader.offset);
       }
@@ -229,50 +226,6 @@ final class PatDecoder extends Converter<List<int>, PatFile> {
       }
       context.warning('PAT hierarchy could not be decoded: ${error.message}', error.offset ?? payloadOffset);
     }
-  }
-
-  /// Returns the optional zero padding before the next recognizable block.
-  static int _taggedPaddingLength(PsBinaryReader reader, int payloadLength) {
-    if (_hasTaggedSignature(reader, 0)) {
-      return 0;
-    }
-    final int expectedLength = (4 - payloadLength % 4) % 4;
-    if (expectedLength == 0 || reader.remaining < expectedLength || !_allZero(reader, expectedLength)) {
-      return 0;
-    }
-    if (reader.remaining == expectedLength || _hasTaggedSignature(reader, expectedLength)) {
-      return expectedLength;
-    }
-    return 0;
-  }
-
-  /// Tests whether the first [length] remaining bytes are all zero.
-  static bool _allZero(PsBinaryReader reader, int length) {
-    for (int index = 0; index < length; index++) {
-      if (reader.bytes[reader.offset + index] != 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /// Tests whether a supported tagged signature starts at [relativeOffset].
-  static bool _hasTaggedSignature(PsBinaryReader reader, int relativeOffset) {
-    if (relativeOffset < 0 || reader.remaining < relativeOffset + 4) {
-      return false;
-    }
-    final int offset = reader.offset + relativeOffset;
-    final String signature = String.fromCharCodes(Uint8List.sublistView(reader.bytes, offset, offset + 4));
-    return signature == _taggedBlockSignature || signature == _largeTaggedBlockSignature;
-  }
-
-  /// Tests whether the current tagged block uses a 64-bit payload length.
-  static bool _hasLargeTaggedSignature(PsBinaryReader reader) {
-    if (reader.remaining < 4) {
-      return false;
-    }
-    final int offset = reader.offset;
-    return String.fromCharCodes(Uint8List.sublistView(reader.bytes, offset, offset + 4)) == _largeTaggedBlockSignature;
   }
 }
 

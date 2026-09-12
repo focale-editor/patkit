@@ -118,11 +118,12 @@ final class PatEncoder extends Converter<PatFile, List<int>> {
   }
 
   /// Encodes one version 16 hierarchy descriptor payload.
-  static Uint8List _encodeHierarchy(PsDescriptor descriptor) =>
-      (PsBinaryWriter()
-            ..writeUint32(_descriptorVersion)
-            ..writeBytes(PsDescriptorCodec.encode(descriptor)))
-          .takeBytes();
+  static Uint8List _encodeHierarchy(PsDescriptor descriptor) => PsVersionedDescriptorCodec.encode(
+    PsVersionedDescriptor(
+      version: _descriptorVersion,
+      descriptor: descriptor,
+    ),
+  );
 
   /// Writes one ordinary or wide tagged block.
   static void _writeTaggedBlock(
@@ -132,18 +133,16 @@ final class PatEncoder extends Converter<PatFile, List<int>> {
     Uint8List data,
     Uint8List preservedPadding,
     PatEncodeOptions options,
-  ) {
-    writer
-      ..writeString(signature)
-      ..writeString(key)
-      ..writeLength(data.length, wide: signature == '8B64')
-      ..writeBytes(data);
-    if (options.mode == PatEncodeMode.permissive) {
-      writer.writeBytes(preservedPadding);
-    } else {
-      writer.writeZeros((4 - data.length % 4) % 4);
-    }
-  }
+  ) => PsTaggedBlockCodec.write(
+    writer,
+    PsTaggedBlock(
+      signature: signature,
+      key: key,
+      data: data,
+      paddingData: preservedPadding,
+    ),
+    preservePadding: options.mode == PatEncodeMode.permissive,
+  );
 
   /// Checks that the PAT envelope and preserved tagged blocks are representable.
   static void _validateRepresentable(PatFile file, PatEncodeOptions options) {
