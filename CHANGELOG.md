@@ -1,5 +1,10 @@
 # 📰 PatKit changelog
 
+## v0.2.1
+Released on September 13, 2026.
+
+* **DOCS**: Added contributing guide, package screenshot, and pubspec metadata. ([#321782a](https://github.com/focale-editor/patkit/commit/321782a))
+
 ## v0.2.0
 Released on September 13, 2026.
 
