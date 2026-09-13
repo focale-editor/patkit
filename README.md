@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="screenshots/overview.png" alt="PatKit package illustration" width="180">
+</p>
+
 # PatKit
 
 PatKit is a pure Dart codec for Adobe Photoshop pattern libraries (`.pat`). It decodes and encodes the original source planes and metadata, renders portable RGBA previews, and preserves extensions that are not yet understood. It has no Flutter, native-code, or third-party PAT-parser dependency.
@@ -129,3 +133,7 @@ See [docs/PAT.md](docs/PAT.md) for the implemented binary layout, compatibility 
 - [pat-parser](https://github.com/jardicc/pat-parser)
 
 PatKit is an independent implementation and is not affiliated with or endorsed by Adobe.
+
+---
+
+Built for **[Focale](https://focale-editor.app)**, an advanced local image editor. Discover what these packages make possible in a real creative workflow.
