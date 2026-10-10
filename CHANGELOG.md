@@ -1,5 +1,11 @@
 # 📰 PatKit changelog
 
+## v0.3.0
+Released on October 10, 2026.
+
+* **BREAKING CHORE**: Updated pscore dependency to 0.2.0. ([#aeb31d3](https://github.com/focale-editor/patkit/commit/aeb31d3))
+* **BREAKING REFACTOR**: Shared hierarchy types, warnings, and exceptions with pscore. ([#eb027c8](https://github.com/focale-editor/patkit/commit/eb027c8))
+
 ## v0.2.2
 Released on October 5, 2026.
 
