@@ -3,7 +3,7 @@ import 'package:patkit/src/model/pat_pattern.dart';
 import 'package:pscore/pscore.dart';
 
 /// Receives a recoverable hierarchy compatibility issue.
-typedef PatHierarchyIssueHandler = void Function(String message);
+typedef PatHierarchyIssueHandler = PsPresetHierarchyIssueHandler;
 
 /// Adapts the shared Photoshop hierarchy mapper to PAT pattern entries.
 abstract final class PatHierarchyMapper {
@@ -30,7 +30,7 @@ abstract final class PatHierarchyMapper {
     ))
       PatHierarchyEntry(
         index: entry.index,
-        kind: _kind(entry.kind),
+        kind: entry.kind,
         depth: entry.depth,
         classId: entry.classId,
         name: entry.name,
@@ -39,13 +39,4 @@ abstract final class PatHierarchyMapper {
         rawDescriptor: entry.rawDescriptor,
       ),
   ]);
-
-  /// Converts the shared semantic role to its compatibility enum.
-  static PatHierarchyEntryKind _kind(PsPresetHierarchyEntryKind kind) => switch (kind) {
-    PsPresetHierarchyEntryKind.groupStart => PatHierarchyEntryKind.groupStart,
-    PsPresetHierarchyEntryKind.groupEnd => PatHierarchyEntryKind.groupEnd,
-    PsPresetHierarchyEntryKind.preset => PatHierarchyEntryKind.preset,
-    PsPresetHierarchyEntryKind.empty => PatHierarchyEntryKind.empty,
-    PsPresetHierarchyEntryKind.unknown => PatHierarchyEntryKind.unknown,
-  };
 }

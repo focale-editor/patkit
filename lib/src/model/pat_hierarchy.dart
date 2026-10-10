@@ -1,23 +1,8 @@
 import 'package:patkit/src/model/pat_pattern.dart';
 import 'package:pscore/pscore.dart';
 
-/// Identifies the role of one slot in Photoshop's optional pattern hierarchy.
-enum PatHierarchyEntryKind {
-  /// Opens a named pattern group.
-  groupStart,
-
-  /// Closes the most recently opened pattern group.
-  groupEnd,
-
-  /// Refers to a pattern preset in source order.
-  preset,
-
-  /// Preserves an intentionally empty hierarchy slot.
-  empty,
-
-  /// Preserves an object class not understood by this release.
-  unknown,
-}
+/// Backward-compatible name for the shared hierarchy-slot role.
+typedef PatHierarchyEntryKind = PsPresetHierarchyEntryKind;
 
 /// One ordered item from a trailing Photoshop `phry` hierarchy descriptor.
 final class PatHierarchyEntry {

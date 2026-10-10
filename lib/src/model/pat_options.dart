@@ -109,13 +109,7 @@ final class PatEncodeOptions {
 }
 
 /// Describes a recoverable compatibility issue found while decoding.
-final class PatWarning {
-  /// Human-readable explanation of the compatibility issue.
-  final String message;
-
-  /// Absolute byte offset associated with the issue, when known.
-  final int? offset;
-
+final class PatWarning extends PsWarning {
   /// Zero-based pattern index associated with the issue, when known.
   final int? patternIndex;
 
@@ -124,60 +118,44 @@ final class PatWarning {
 
   /// Creates a warning with optional source context.
   const PatWarning({
-    required this.message,
-    this.offset,
+    required super.message,
+    super.offset,
     this.patternIndex,
     this.blockKey,
   });
 
   @override
-  String toString() {
-    final String location = offset == null ? '' : ' at byte $offset';
+  String get typeName => 'PatWarning';
+
+  @override
+  String get context {
     final int? currentPatternIndex = patternIndex;
     final String pattern = currentPatternIndex == null ? '' : ' in pattern ${currentPatternIndex + 1}';
     final String block = blockKey == null ? '' : ' in $blockKey';
-    return 'PatWarning$location$pattern$block: $message';
+    return '$pattern$block';
   }
 }
 
 /// Reports malformed, truncated, unsupported, or unsafe PAT input.
-final class PatFormatException implements FormatException {
-  /// Human-readable explanation of the malformed data.
-  @override
-  final String message;
-
-  /// Input associated with the failure, when useful.
-  @override
-  final Object? source;
-
-  /// Absolute byte offset associated with the failure, when known.
-  @override
-  final int? offset;
-
-  /// Creates a PAT format error at an optional absolute byte [offset].
+final class PatFormatException extends PsFormatException {
+  /// Creates an error at an optional absolute byte [offset].
   const PatFormatException({
-    required this.message,
-    this.source,
-    this.offset,
+    required super.message,
+    super.source,
+    super.offset,
   });
 
   @override
-  String toString() {
-    final String location = offset == null ? '' : ' at byte $offset';
-    return 'PatFormatException$location: $message';
-  }
+  String get typeName => 'PatFormatException';
 }
 
 /// Reports model data that cannot be represented by the requested PAT output.
-final class PatWriteException implements Exception {
-  /// Explains why encoding failed.
-  final String message;
-
+final class PatWriteException extends PsWriteException {
   /// Creates an encoding error with a user-facing [message].
   const PatWriteException({
-    required this.message,
+    required super.message,
   });
 
   @override
-  String toString() => 'PatWriteException: $message';
+  String get typeName => 'PatWriteException';
 }
